@@ -828,7 +828,7 @@ func (e RanOutOfTicksForPoolError) Error() string {
 }
 
 type SqrtRootCalculationError struct {
-	SqrtPriceLimit sdk.Dec
+	SqrtPriceLimit osmomath.BigDec
 }
 
 func (e SqrtRootCalculationError) Error() string {
@@ -877,7 +877,7 @@ type OverChargeSwapOutGivenInError struct {
 func (e OverChargeSwapOutGivenInError) Error() string {
 	return fmt.Sprintf("over charge problem swap out given in by (%s)", e.AmountSpecifiedRemaining)
 }
-  
+
 type ComputedSqrtPriceInequalityError struct {
 	IsZeroForOne                 bool
 	NextInitializedTickSqrtPrice osmomath.BigDec

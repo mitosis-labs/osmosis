@@ -1,8 +1,10 @@
 package keeper
 
 import (
-	"github.com/osmosis-labs/osmosis/v16/x/incentives/types"
-	lockuptypes "github.com/osmosis-labs/osmosis/v16/x/lockup/types"
+	"fmt"
+
+	"github.com/osmosis-labs/osmosis/v17/x/incentives/types"
+	lockuptypes "github.com/osmosis-labs/osmosis/v17/x/lockup/types"
 	epochstypes "github.com/osmosis-labs/osmosis/x/epochs/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,9 +18,11 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 // AfterEpochEnd is the epoch end hook.
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) error {
 	params := k.GetParams(ctx)
+
 	if epochIdentifier == params.DistrEpochIdentifier {
 		// begin distribution if it's start time
 		gauges := k.GetUpcomingGauges(ctx)
+		ctx.Logger().Info(fmt.Sprintf("x/incentives AfterEpochEnd, num upcoming gauges %d, %d", len(gauges), ctx.BlockHeight()))
 		for _, gauge := range gauges {
 			if !ctx.BlockTime().Before(gauge.StartTime) {
 				if err := k.moveUpcomingGaugeToActiveGauge(ctx, gauge); err != nil {
@@ -29,6 +33,11 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 
 		if len(gauges) > 10 {
 			ctx.EventManager().IncreaseCapacity(2e6)
+		}
+
+		err := k.AllocateAcrossGauges(ctx)
+		if err != nil {
+			return err
 		}
 
 		// distribute due to epoch event
@@ -43,7 +52,9 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 				distrGauges = append(distrGauges, gauge)
 			}
 		}
-		_, err := k.Distribute(ctx, distrGauges)
+
+		ctx.Logger().Info("AfterEpochEnd: distributing to gauges", "module", types.ModuleName, "numGauges", len(distrGauges), "height", ctx.BlockHeight())
+		_, err = k.Distribute(ctx, distrGauges)
 		if err != nil {
 			return err
 		}

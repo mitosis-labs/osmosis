@@ -10,7 +10,7 @@ import (
 
 	"github.com/osmosis-labs/osmosis/osmoutils"
 	"github.com/osmosis-labs/osmosis/osmoutils/osmocli"
-	"github.com/osmosis-labs/osmosis/v16/x/superfluid/types"
+	"github.com/osmosis-labs/osmosis/v17/x/superfluid/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -19,8 +19,8 @@ import (
 	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	cltypes "github.com/osmosis-labs/osmosis/v16/x/concentrated-liquidity/types"
-	gammtypes "github.com/osmosis-labs/osmosis/v16/x/gamm/types"
+	cltypes "github.com/osmosis-labs/osmosis/v17/x/concentrated-liquidity/types"
+	gammtypes "github.com/osmosis-labs/osmosis/v17/x/gamm/types"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -34,11 +34,11 @@ func GetTxCmd() *cobra.Command {
 		// NewSuperfluidRedelegateCmd(),
 		NewCmdLockAndSuperfluidDelegate(),
 		NewCmdUnPoolWhitelistedPool(),
+		NewUnbondConvertAndStake(),
 	)
 	osmocli.AddTxCmd(cmd, NewCreateFullRangePositionAndSuperfluidDelegateCmd)
 	osmocli.AddTxCmd(cmd, NewAddToConcentratedLiquiditySuperfluidPositionCmd)
 	osmocli.AddTxCmd(cmd, NewUnlockAndMigrateSharesToFullRangeConcentratedPositionCmd)
-	osmocli.AddTxCmd(cmd, NewLockExistingFullRangePositionAndSFStakeCmd)
 
 	return cmd
 }
@@ -425,10 +425,55 @@ func NewUnlockAndMigrateSharesToFullRangeConcentratedPositionCmd() (*osmocli.TxC
 	}, &types.MsgUnlockAndMigrateSharesToFullRangeConcentratedPosition{}
 }
 
-func NewLockExistingFullRangePositionAndSFStakeCmd() (*osmocli.TxCliDesc, *types.MsgLockExistingFullRangePositionAndSFStake) {
-	return &osmocli.TxCliDesc{
-		Use:     "lock-cl-position-and-sfs [position-id] [val-addr]",
-		Short:   "lock and existing cl position and superfluid stake it to the provided validator",
-		Example: "lock-cl-position-and-sfs 22 osmovaloper1h2c47vd943scjlfum6yc5frvu2l279lwjep5d6",
-	}, &types.MsgLockExistingFullRangePositionAndSFStake{}
+func NewUnbondConvertAndStake() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "unbond-convert-and-stake [lock-id] [valAddr] [min-amount-to-stake](optional) [shares-to-convert](optional)",
+		Short:   "instantly unbond any locked gamm shares convert them into osmo and stake",
+		Example: "unbond-convert-and-stake 10 osmo1xxx 100000uosmo",
+		Args:    cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			sender := clientCtx.GetFromAddress()
+			lockId, err := strconv.Atoi(args[0])
+			if err != nil {
+				return err
+			}
+
+			valAddr := args[1]
+
+			var minAmtToStake sdk.Int
+			// if user provided args for min amount to stake, use it. If not, use empty coin struct
+			var sharesToConvert sdk.Coin
+			if len(args) >= 3 {
+				convertedInt, ok := sdk.NewIntFromString(args[2])
+				if !ok {
+					return fmt.Errorf("Conversion for sdk.Int failed")
+				}
+				minAmtToStake = convertedInt
+				if len(args) == 4 {
+					coins, err := sdk.ParseCoinNormalized(args[3])
+					if err != nil {
+						return err
+					}
+					sharesToConvert = coins
+				}
+			} else {
+				minAmtToStake = sdk.ZeroInt()
+				sharesToConvert = sdk.Coin{}
+			}
+
+			msg := types.NewMsgUnbondConvertAndStake(sender, uint64(lockId), valAddr, minAmtToStake, sharesToConvert)
+
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
 }

@@ -6,9 +6,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	cl "github.com/osmosis-labs/osmosis/v16/x/concentrated-liquidity"
-	clquery "github.com/osmosis-labs/osmosis/v16/x/concentrated-liquidity/client/queryproto"
-	"github.com/osmosis-labs/osmosis/v16/x/concentrated-liquidity/model"
+	cl "github.com/osmosis-labs/osmosis/v17/x/concentrated-liquidity"
+	clquery "github.com/osmosis-labs/osmosis/v17/x/concentrated-liquidity/client/queryproto"
+	"github.com/osmosis-labs/osmosis/v17/x/concentrated-liquidity/model"
 )
 
 // Querier defines a wrapper around the x/concentrated-liquidity keeper providing gRPC method
@@ -188,12 +188,22 @@ func (q Querier) PoolAccumulatorRewards(ctx sdk.Context, req clquery.PoolAccumul
 		return nil, status.Error(codes.InvalidArgument, "pool id is zero")
 	}
 
-	spreadRewardsAcc, err := q.Keeper.GetSpreadRewardAccumulator(ctx, req.PoolId)
+	// We utilize a cache context here as we need to update the global uptime accumulators but
+	// we don't want to persist the changes to the store.
+	cacheCtx, _ := ctx.CacheContext()
+
+	// Sync global uptime accumulators to ensure the uptime tracker init values are up to date.
+	err := q.Keeper.UpdatePoolUptimeAccumulatorsToNow(cacheCtx, req.PoolId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	uptimeAccValues, err := q.Keeper.GetUptimeAccumulatorValues(ctx, req.PoolId)
+	spreadRewardsAcc, err := q.Keeper.GetSpreadRewardAccumulator(cacheCtx, req.PoolId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	uptimeAccValues, err := q.Keeper.GetUptimeAccumulatorValues(cacheCtx, req.PoolId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -262,6 +272,10 @@ func (q Querier) UserUnbondingPositions(ctx sdk.Context, req clquery.UserUnbondi
 	}
 
 	cfmmPoolId, err := q.Keeper.GetUserUnbondingPositions(ctx, sdkAddr)
+	if err != nil {
+		return nil, err
+	}
+
 	return &clquery.UserUnbondingPositionsResponse{
 		PositionsWithPeriodLock: cfmmPoolId,
 	}, nil

@@ -21,7 +21,7 @@ const (
 	TypeMsgUnlockAndMigrateShares                       = "unlock_and_migrate_shares"
 	TypeMsgCreateFullRangePositionAndSuperfluidDelegate = "create_full_range_position_and_delegate"
 	TypeMsgAddToConcentratedLiquiditySuperfluidPosition = "add_to_concentrated_liquidity_superfluid_position"
-	TypeMsgLockExistingFullRangePositionAndSFStake      = "lock_existing_full_range_position_and_sf_stake"
+	TypeMsgUnbondConvertAndStake                        = "add_to_concentrated_liquidity_superfluid_position"
 )
 
 var _ sdk.Msg = &MsgSuperfluidDelegate{}
@@ -394,36 +394,40 @@ func (msg MsgAddToConcentratedLiquiditySuperfluidPosition) GetSigners() []sdk.Ac
 	return []sdk.AccAddress{sender}
 }
 
-var _ sdk.Msg = &MsgLockExistingFullRangePositionAndSFStake{}
+var _ sdk.Msg = &MsgUnbondConvertAndStake{}
 
-func (msg MsgLockExistingFullRangePositionAndSFStake) Route() string { return RouterKey }
-func (msg MsgLockExistingFullRangePositionAndSFStake) Type() string {
-	return TypeMsgLockExistingFullRangePositionAndSFStake
+func NewMsgUnbondConvertAndStake(sender sdk.AccAddress, lockId uint64, valAddr string, minAmtToStake sdk.Int, sharesToConvert sdk.Coin) *MsgUnbondConvertAndStake {
+	return &MsgUnbondConvertAndStake{
+		Sender:          sender.String(),
+		LockId:          lockId,
+		ValAddr:         valAddr,
+		MinAmtToStake:   minAmtToStake,
+		SharesToConvert: sharesToConvert,
+	}
 }
 
-func (msg MsgLockExistingFullRangePositionAndSFStake) ValidateBasic() error {
+func (msg MsgUnbondConvertAndStake) Route() string { return RouterKey }
+func (msg MsgUnbondConvertAndStake) Type() string {
+	return TypeMsgUnbondConvertAndStake
+}
+
+func (msg MsgUnbondConvertAndStake) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return fmt.Errorf("Invalid sender address (%s)", err)
 	}
 
-	if msg.PositionId <= 0 {
-		return fmt.Errorf("Invalid position id (%s)", strconv.FormatUint(msg.PositionId, 10))
+	if msg.MinAmtToStake.IsNegative() {
+		return fmt.Errorf("Min amount to stake cannot be negative")
 	}
-
-	_, err = sdk.ValAddressFromBech32(msg.ValAddr)
-	if err != nil {
-		return fmt.Errorf("Invalid validator address (%s)", err)
-	}
-
 	return nil
 }
 
-func (msg MsgLockExistingFullRangePositionAndSFStake) GetSignBytes() []byte {
+func (msg MsgUnbondConvertAndStake) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
-func (msg MsgLockExistingFullRangePositionAndSFStake) GetSigners() []sdk.AccAddress {
+func (msg MsgUnbondConvertAndStake) GetSigners() []sdk.AccAddress {
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
