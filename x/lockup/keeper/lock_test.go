@@ -7,11 +7,11 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	cl "github.com/osmosis-labs/osmosis/v17/x/concentrated-liquidity"
-	cltypes "github.com/osmosis-labs/osmosis/v17/x/concentrated-liquidity/types"
-	"github.com/osmosis-labs/osmosis/v17/x/lockup/keeper"
-	"github.com/osmosis-labs/osmosis/v17/x/lockup/types"
-	lockuptypes "github.com/osmosis-labs/osmosis/v17/x/lockup/types"
+	cl "github.com/osmosis-labs/osmosis/v19/x/concentrated-liquidity"
+	cltypes "github.com/osmosis-labs/osmosis/v19/x/concentrated-liquidity/types"
+	"github.com/osmosis-labs/osmosis/v19/x/lockup/keeper"
+	"github.com/osmosis-labs/osmosis/v19/x/lockup/types"
+	lockuptypes "github.com/osmosis-labs/osmosis/v19/x/lockup/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
