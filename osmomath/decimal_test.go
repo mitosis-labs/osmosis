@@ -384,6 +384,27 @@ func (s *decimalTestSuite) TestBigDecFromSdkDec() {
 	}
 }
 
+func (s *decimalTestSuite) TestBigDecFromSdkInt() {
+	tests := []struct {
+		i        osmomath.Int
+		want     osmomath.BigDec
+		expPanic bool
+	}{
+		{osmomath.ZeroInt(), osmomath.NewBigDec(0), false},
+		{osmomath.OneInt(), osmomath.NewBigDec(1), false},
+		{osmomath.NewInt(10), osmomath.NewBigDec(10), false},
+		{osmomath.NewInt(10090090090090090), osmomath.NewBigDecWithPrec(10090090090090090, 0), false},
+	}
+	for tcIndex, tc := range tests {
+		if tc.expPanic {
+			s.Require().Panics(func() { osmomath.BigDecFromSDKInt(tc.i) })
+		} else {
+			value := osmomath.BigDecFromSDKInt(tc.i)
+			s.Require().Equal(tc.want, value, "bad osmomath.BigDecFromDec(), index: %v", tcIndex)
+		}
+	}
+}
+
 func (s *decimalTestSuite) TestBigDecFromSdkDecSlice() {
 	tests := []struct {
 		d        []osmomath.Dec
@@ -1619,7 +1640,7 @@ func (s *decimalTestSuite) TestChopPrecision_Mutative() {
 	tests := []struct {
 		startValue        osmomath.BigDec
 		expectedMutResult osmomath.BigDec
-		precision         int64
+		precision         uint64
 	}{
 		{osmomath.NewBigDec(0), osmomath.MustNewBigDecFromStr("0"), 0},
 		{osmomath.NewBigDec(1), osmomath.MustNewBigDecFromStr("1"), 0},
