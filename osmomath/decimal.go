@@ -602,7 +602,7 @@ func (d *BigDec) DecMut() Dec {
 // BigDec: 1.010100000000153000000000000000000000
 // precision: 4
 // Output Dec: 1.010100000000000000
-func (d *BigDec) DecWithPrecisionMut(precision int64) Dec {
+func (d *BigDec) DecWithPrecisionMut(precision uint64) Dec {
 	var precisionFactor *big.Int
 	if precision > PrecisionDec {
 		panic(fmt.Sprintf("maximum Dec precision is (%v), provided (%v)", PrecisionDec, precision))
