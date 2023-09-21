@@ -2,8 +2,8 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/osmosis-labs/osmosis/v19/x/gamm/types"
+	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
