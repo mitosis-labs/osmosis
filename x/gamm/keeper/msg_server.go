@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"context"
-
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/osmosis-labs/osmosis/v19/x/gamm/pool-models/balancer"
@@ -144,16 +144,16 @@ func (server msgServer) ExitPool(goCtx context.Context, msg *types.MsgExitPool) 
 
 func (server msgServer) SwapExactAmountIn(goCtx context.Context, msg *types.MsgSwapExactAmountIn) (*types.MsgSwapExactAmountInResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
+	server.keeper.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 1] msg server swap exactAmountIn debug "))
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
 	}
-
 	tokenOutAmount, err := server.keeper.poolManager.RouteExactAmountIn(ctx, sender, msg.Routes, msg.TokenIn, msg.TokenOutMinAmount)
 	if err != nil {
 		return nil, err
 	}
+	server.keeper.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 2] msg server swap exactAmountIn debug "))
 
 	// Swap event is handled elsewhere
 	ctx.EventManager().EmitEvents(sdk.Events{

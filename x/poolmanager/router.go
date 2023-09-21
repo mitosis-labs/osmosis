@@ -30,6 +30,7 @@ func (k Keeper) RouteExactAmountIn(
 	tokenIn sdk.Coin,
 	tokenOutMinAmount osmomath.Int,
 ) (tokenOutAmount osmomath.Int, err error) {
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 1] routeExactAmountIn debug "))
 	var (
 		isMultiHopRouted   bool
 		routeSpreadFactor  osmomath.Dec
@@ -41,6 +42,7 @@ func (k Keeper) RouteExactAmountIn(
 	if err := routeStep.Validate(); err != nil {
 		return osmomath.Int{}, err
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 2] routeExactAmountIn debug "))
 
 	// In this loop (isOsmoRoutedMultihop), we check if:
 	// - the routeStep is of length 2
@@ -53,6 +55,7 @@ func (k Keeper) RouteExactAmountIn(
 	// total_spread_factor = max(spread_factor1, spread_factor2)
 	// fee_per_pool = total_spread_factor * ((pool_fee) / (spread_factor1 + spread_factor2))
 	if k.isOsmoRoutedMultihop(ctx, routeStep, route[0].TokenOutDenom, tokenIn.Denom) {
+		k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 3] routeExactAmountIn debug "))
 		isMultiHopRouted = true
 		routeSpreadFactor, sumOfSpreadFactors, err = k.getOsmoRoutedMultihopTotalSpreadFactor(ctx, routeStep)
 		if err != nil {
@@ -62,13 +65,14 @@ func (k Keeper) RouteExactAmountIn(
 
 	// Iterate through the route and execute a series of swaps through each pool.
 	for i, routeStep := range route {
+		k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 4] routeExactAmountIn debug "))
 		// To prevent the multihop swap from being interrupted prematurely, we keep
 		// the minimum expected output at a very low number until the last pool
 		_outMinAmount := osmomath.NewInt(1)
 		if len(route)-1 == i {
 			_outMinAmount = tokenOutMinAmount
 		}
-
+		k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 5] routeExactAmountIn debug "))
 		// Get underlying pool type corresponding to the pool ID at the current routeStep.
 		swapModule, err := k.GetPoolModule(ctx, routeStep.PoolId)
 		if err != nil {
@@ -80,20 +84,20 @@ func (k Keeper) RouteExactAmountIn(
 		if poolErr != nil {
 			return osmomath.Int{}, poolErr
 		}
-
+		k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 6] routeExactAmountIn debug "))
 		// Check if pool has swaps enabled.
 		if !pool.IsActive(ctx) {
 			return osmomath.Int{}, types.InactivePoolError{PoolId: pool.GetId()}
 		}
 
 		spreadFactor := pool.GetSpreadFactor(ctx)
-
+		k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 7] routeExactAmountIn debug "))
 		// If we determined the route is an osmo multi-hop and both routes are incentivized,
 		// we modify the spread factor accordingly.
 		if isMultiHopRouted {
 			spreadFactor = routeSpreadFactor.MulRoundUp((spreadFactor.QuoRoundUp(sumOfSpreadFactors)))
 		}
-
+		k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 8] routeExactAmountIn debug "))
 		tokenInAfterSubTakerFee, err := k.chargeTakerFee(ctx, tokenIn, routeStep.TokenOutDenom, sender, true)
 		if err != nil {
 			return osmomath.Int{}, err
@@ -103,12 +107,13 @@ func (k Keeper) RouteExactAmountIn(
 		if err != nil {
 			return osmomath.Int{}, err
 		}
-
+		k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 9] routeExactAmountIn debug "))
 		// Track volume for volume-splitting incentives
 		k.trackVolume(ctx, pool.GetId(), tokenIn)
-
+		k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 10] routeExactAmountIn debug "))
 		// Chain output of current pool as the input for the next routed pool
 		tokenIn = sdk.NewCoin(routeStep.TokenOutDenom, tokenOutAmount)
+		k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 11] routeExactAmountIn debug "))
 	}
 	return tokenOutAmount, nil
 }

@@ -1,13 +1,14 @@
 package poolmanager
 
 import (
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogotypes "github.com/gogo/protobuf/types"
 
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/osmosis-labs/osmosis/osmoutils"
 	"github.com/osmosis-labs/osmosis/v19/x/poolmanager/types"
-
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 type Keeper struct {
@@ -130,4 +131,9 @@ func (k *Keeper) SetStakingKeeper(stakingKeeper types.StakingKeeper) {
 // SetProtorevKeeper sets protorev keeper
 func (k *Keeper) SetProtorevKeeper(protorevKeeper types.ProtorevKeeper) {
 	k.protorevKeeper = protorevKeeper
+}
+
+// Logger returns a module-specific logger.
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
