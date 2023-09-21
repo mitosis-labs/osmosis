@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"fmt"
-
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/osmosis-labs/osmosis/v19/x/gamm/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -76,6 +76,11 @@ func (k *Keeper) SetHooks(gh types.GammHooks) *Keeper {
 	k.hooks = gh
 
 	return k
+}
+
+// Logger returns a module-specific logger.
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
 func (k *Keeper) SetPoolManager(poolManager types.PoolManager) {

@@ -88,6 +88,7 @@ func (k Keeper) SwapExactAmountOut(
 	tokenOut sdk.Coin,
 	spreadFactor osmomath.Dec,
 ) (tokenInAmount osmomath.Int, err error) {
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 1] swap debug %v %v %v ", pool, sender, tokenOut))
 	if tokenInDenom == tokenOut.Denom {
 		return osmomath.Int{}, errors.New("cannot trade same denomination in and out")
 	}
@@ -102,24 +103,24 @@ func (k Keeper) SwapExactAmountOut(
 	if err != nil {
 		return osmomath.Int{}, err
 	}
-
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 2] swap debug %v %v %v", pool, sender, tokenOut))
 	poolOutBal := liquidity.AmountOf(tokenOut.Denom)
 	if tokenOut.Amount.GTE(poolOutBal) {
 		return osmomath.Int{}, errorsmod.Wrapf(types.ErrTooManyTokensOut,
 			"can't get more tokens out than there are tokens in the pool")
 	}
-
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 3] swap debug %v %v %v", pool, sender, tokenOut))
 	cfmmPool, err := asCFMMPool(pool)
 	if err != nil {
 		return osmomath.Int{}, err
 	}
-
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 4] swap debug %v %v %v", pool, sender, tokenOut))
 	tokenIn, err := cfmmPool.SwapInAmtGivenOut(ctx, sdk.Coins{tokenOut}, tokenInDenom, spreadFactor)
 	if err != nil {
 		return osmomath.Int{}, err
 	}
 	tokenInAmount = tokenIn.Amount
-
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 5] swap debug %v %v %v %v", pool, sender, tokenIn, tokenOut))
 	if tokenInAmount.LTE(osmomath.ZeroInt()) {
 		return osmomath.Int{}, errorsmod.Wrapf(types.ErrInvalidMathApprox, "token amount is zero or negative")
 	}
@@ -127,11 +128,12 @@ func (k Keeper) SwapExactAmountOut(
 	if tokenInAmount.GT(tokenInMaxAmount) {
 		return osmomath.Int{}, errorsmod.Wrapf(types.ErrLimitMaxAmount, "Swap requires %s, which is greater than the amount %s", tokenIn, tokenInMaxAmount)
 	}
-
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 6] swap debug %v %v %v %v", pool, sender, tokenIn, tokenOut))
 	err = k.updatePoolForSwap(ctx, pool, sender, tokenIn, tokenOut)
 	if err != nil {
 		return osmomath.Int{}, err
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 7] swap debug %v %v %v %v", pool, sender, tokenIn, tokenOut))
 	return tokenInAmount, nil
 }
 
