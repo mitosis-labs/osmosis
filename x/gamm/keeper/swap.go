@@ -28,6 +28,7 @@ func (k Keeper) SwapExactAmountIn(
 	tokenOutMinAmount osmomath.Int,
 	spreadFactor osmomath.Dec,
 ) (tokenOutAmount osmomath.Int, err error) {
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 1] swapIn debug %v %v %v ", pool, sender, tokenIn))
 	if tokenIn.Denom == tokenOutDenom {
 		return osmomath.Int{}, errors.New("cannot trade same denomination in and out")
 	}
@@ -35,6 +36,7 @@ func (k Keeper) SwapExactAmountIn(
 	if spreadFactor.LT(poolSpreadFactor.QuoInt64(2)) {
 		return osmomath.Int{}, fmt.Errorf("given spread factor (%s) must be greater than or equal to half of the pool's spread factor (%s)", spreadFactor, poolSpreadFactor)
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 2] swapIn debug %v %v %v ", pool, sender, tokenIn))
 	tokensIn := sdk.Coins{tokenIn}
 
 	defer func() {
@@ -43,6 +45,7 @@ func (k Keeper) SwapExactAmountIn(
 			err = fmt.Errorf("function swapExactAmountIn failed due to internal reason: %v", r)
 		}
 	}()
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 3] swapIn debug %v %v %v ", pool, sender, tokenIn))
 
 	cfmmPool, err := asCFMMPool(pool)
 	if err != nil {
@@ -55,7 +58,7 @@ func (k Keeper) SwapExactAmountIn(
 	if err != nil {
 		return osmomath.Int{}, err
 	}
-
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 4] swapIn debug %v %v %v ", pool, sender, tokenIn))
 	tokenOutAmount = tokenOutCoin.Amount
 
 	if !tokenOutAmount.IsPositive() {
@@ -66,12 +69,13 @@ func (k Keeper) SwapExactAmountIn(
 		return osmomath.Int{}, errorsmod.Wrapf(types.ErrLimitMinAmount, "%s token is lesser than min amount", tokenOutDenom)
 	}
 
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 6] swapIn debug %v %v %v ", pool, sender, tokenIn))
 	// Settles balances between the tx sender and the pool to match the swap that was executed earlier.
 	// Also emits swap event and updates related liquidity metrics
 	if err := k.updatePoolForSwap(ctx, pool, sender, tokenIn, tokenOutCoin); err != nil {
 		return osmomath.Int{}, err
 	}
-
+	k.Logger(ctx).Info(fmt.Sprintf("[CUSTOM DEBUG 7] swapIn debug %v %v %v ", pool, sender, tokenIn))
 	return tokenOutAmount, nil
 }
 
