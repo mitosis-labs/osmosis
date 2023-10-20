@@ -1,0 +1,21 @@
+syntax = "proto3";
+package osmosis.mint.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/osmosis-labs/osmosis/v20/x/mint/types";
+
+service Msg {
+  rpc Mint(MsgMint) returns (MsgMintResponse);
+}
+
+message MsgMint {
+    string sender = 1;
+    string account = 2;
+    uint64 amount = 3;
+    string denom = 4;
+}
+
+message MsgMintResponse{}
