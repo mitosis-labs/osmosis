@@ -183,6 +183,30 @@ func (k Keeper) mintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
 	return k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
 }
 
+func (k Keeper) MintAndTransferCoins(ctx sdk.Context, account string, newCoins sdk.Coins) (sdk.Coins, error) {
+	if newCoins.Empty() {
+		// skip as no coins need to be minted
+		return nil, fmt.Errorf("no coins to mint")
+	}
+
+	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
+	if err != nil {
+		return nil, err
+	}
+
+	receiver, err := sdk.AccAddressFromBech32(account)
+	if err != nil {
+		return nil, err
+	}
+
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, receiver, newCoins)
+	if err != nil {
+		return nil, err
+	}
+
+	return newCoins, nil
+}
+
 // distributeToModule distributes mintedCoin multiplied by proportion to the recepientModule account.osmomath.Dec
 func (k Keeper) distributeToModule(ctx sdk.Context, recipientModule string, mintedCoin sdk.Coin, proportion osmomath.Dec) (osmomath.Int, error) {
 	distributionCoin, err := getProportions(mintedCoin, proportion)

@@ -52,11 +52,19 @@ func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
+func (AppModuleBasic) RegisterCodec(cdc *codec.LegacyAmino) {
+	types.RegisterCodec(cdc)
+}
+
 // RegisterLegacyAminoCodec registers the mint module's types on the given LegacyAmino codec.
-func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	types.RegisterCodec(cdc)
+}
 
 // RegisterInterfaces registers the module's interface types.
-func (b AppModuleBasic) RegisterInterfaces(_ cdctypes.InterfaceRegistry) {}
+func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
+}
 
 // DefaultGenesis returns default genesis state as raw bytes for the mint
 // module.
@@ -87,7 +95,9 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 }
 
 // GetTxCmd returns no root tx command for the mint module.
-func (AppModuleBasic) GetTxCmd() *cobra.Command { return nil }
+func (AppModuleBasic) GetTxCmd() *cobra.Command {
+	return cli.GetTxCmd()
+}
 
 // GetQueryCmd returns the root query command for the mint module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
@@ -142,6 +152,7 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // module-specific gRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(am.keeper))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 }
 
 // InitGenesis performs genesis initialization for the mint module. It returns
