@@ -407,6 +407,7 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 		appKeepers.BankKeeper,
 		appKeepers.DistrKeeper,
 		appKeepers.EpochsKeeper,
+		appKeepers.TransferKeeper,
 		authtypes.FeeCollectorName,
 	)
 	appKeepers.MintKeeper = &mintKeeper

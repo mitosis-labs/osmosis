@@ -1,6 +1,8 @@
 package types // noalias
 
 import (
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+
 	"github.com/osmosis-labs/osmosis/osmomath"
 	epochstypes "github.com/osmosis-labs/osmosis/x/epochs/types"
 
@@ -36,4 +38,8 @@ type CommunityPoolKeeper interface {
 // EpochKeeper defines the contract needed to be fulfilled for epochs keeper.
 type EpochKeeper interface {
 	GetEpochInfo(ctx sdk.Context, identifier string) epochstypes.EpochInfo
+}
+
+type TransferKeeper interface {
+	SetDenomTrace(ctx sdk.Context, denomTrace ibctransfertypes.DenomTrace)
 }

@@ -15,7 +15,9 @@ message MsgMint {
     string sender = 1;
     string account = 2;
     uint64 amount = 3;
-    string denom = 4;
+    string base_denom = 4;
+    string channel_id = 5;
+    bool is_ibc_denom  = 6;
 }
 
 message MsgMintResponse{}

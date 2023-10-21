@@ -10,12 +10,14 @@ const TypeMsgMint = "mint"
 
 var _ sdk.Msg = &MsgMint{}
 
-func NewMsgMint(sender, account string, amount uint64, denom string) *MsgMint {
+func NewMsgMint(sender, account string, amount uint64, baseDenom string, channelId string, isIbcDenom bool) *MsgMint {
 	return &MsgMint{
-		Sender:  sender,
-		Account: account,
-		Amount:  amount,
-		Denom:   denom,
+		Sender:     sender,
+		Account:    account,
+		Amount:     amount,
+		BaseDenom:  baseDenom,
+		ChannelId:  channelId,
+		IsIbcDenom: isIbcDenom,
 	}
 }
 

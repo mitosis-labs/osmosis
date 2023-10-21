@@ -23,9 +23,9 @@ var _ types.MsgServer = msgServer{}
 func (server msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMintResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	newCoins := sdk.NewCoins(sdk.NewCoin(msg.Denom, sdk.NewIntFromUint64(msg.Amount)))
+	// newCoins := sdk.NewCoins(sdk.NewCoin(msg.BaseDenom, sdk.NewIntFromUint64(msg.Amount)))
 
-	_, err := server.Keeper.MintAndTransferCoins(ctx, msg.Account, newCoins)
+	_, err := server.Keeper.MintAndTransferCoins(ctx, msg.Account, msg.Amount, msg.BaseDenom, msg.ChannelId, msg.IsIbcDenom)
 	if err != nil {
 		return nil, err
 	}

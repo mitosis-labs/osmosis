@@ -15,6 +15,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 )
 
 // Keeper of the mint store.
@@ -26,6 +28,7 @@ type Keeper struct {
 	communityPoolKeeper types.CommunityPoolKeeper
 	epochKeeper         types.EpochKeeper
 	hooks               types.MintHooks
+	transferkeeper      types.TransferKeeper
 	feeCollectorName    string
 }
 
@@ -51,7 +54,7 @@ const emptyWeightedAddressReceiver = ""
 // NewKeeper creates a new mint Keeper instance.
 func NewKeeper(
 	key sdk.StoreKey, paramSpace paramtypes.Subspace,
-	ak types.AccountKeeper, bk types.BankKeeper, ck types.CommunityPoolKeeper, epochKeeper types.EpochKeeper,
+	ak types.AccountKeeper, bk types.BankKeeper, ck types.CommunityPoolKeeper, epochKeeper types.EpochKeeper, transferKeeper types.TransferKeeper,
 	feeCollectorName string,
 ) Keeper {
 	// ensure mint module account is set
@@ -71,6 +74,7 @@ func NewKeeper(
 		bankKeeper:          bk,
 		communityPoolKeeper: ck,
 		epochKeeper:         epochKeeper,
+		transferkeeper:      transferKeeper,
 		feeCollectorName:    feeCollectorName,
 	}
 }
@@ -183,12 +187,27 @@ func (k Keeper) mintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
 	return k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
 }
 
-func (k Keeper) MintAndTransferCoins(ctx sdk.Context, account string, newCoins sdk.Coins) (sdk.Coins, error) {
-	if newCoins.Empty() {
+func (k Keeper) MintAndTransferCoins(ctx sdk.Context, account string, amount uint64, baseDenom string, channelId string, isIbcDenom bool) (sdk.Coins, error) {
+	if amount == 0 {
 		// skip as no coins need to be minted
 		return nil, fmt.Errorf("no coins to mint")
 	}
+	if baseDenom == "" {
+		return nil, fmt.Errorf("empty denom")
+	}
 
+	var denom string
+	var denomTrace ibctransfertypes.DenomTrace
+	if isIbcDenom {
+		fullDenomPath := "transfer/" + channelId + "/" + baseDenom
+		denomTrace = ibctransfertypes.ParseDenomTrace(fullDenomPath)
+		k.transferkeeper.SetDenomTrace(ctx, denomTrace)
+		denom = denomTrace.IBCDenom()
+	} else {
+		denom = baseDenom
+	}
+
+	newCoins := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewIntFromUint64(amount)))
 	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
 	if err != nil {
 		return nil, err
