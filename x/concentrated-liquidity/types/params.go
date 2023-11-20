@@ -54,7 +54,7 @@ func DefaultParams() Params {
 		},
 		BalancerSharesRewardDiscount:        DefaultBalancerSharesDiscount,
 		AuthorizedUptimes:                   DefaultAuthorizedUptimes,
-		IsPermissionlessPoolCreationEnabled: false,
+		IsPermissionlessPoolCreationEnabled: true,
 		UnrestrictedPoolCreatorWhitelist:    DefaultUnrestrictedPoolCreatorWhitelist,
 	}
 }
